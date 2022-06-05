@@ -105,12 +105,12 @@ def confirm_menu(header, subheader, yes_callback):
   menu.perform()
 
 def confirm_delete_menu():
-  header= "DELETE " + state["selected_file"]
-  confirm_menu(header, None, delete_file)
+  header = "DELETE " + state["selected_file"]
+  confirm_menu(header, '', delete_file)
 
 def confirm_paste_menu():
-  header= "COPY " + state["copied_path"][-15:]
-  subheader= "TO " + state["selected_path"][-17:]
+  header = "COPY " + state["copied_path"][-15:]
+  subheader = "TO " + state["selected_path"][-17:]
   confirm_menu(header, subheader, paste_file)
 
 def draw_action_menu():
