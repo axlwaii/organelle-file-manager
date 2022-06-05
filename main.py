@@ -140,6 +140,7 @@ def draw_manager_menu():
   global state
   clear_menu()
   menu.header= 'DIR:.' + state["current_directory"][-14:]
+  helpers.directory = state["current_directory"]
   files_list = sorted(filter(helpers.isfile, os.listdir(state["current_directory"])))
   dirs_list = sorted(filter(helpers.isdir, os.listdir(state["current_directory"])))
   if (state["current_directory"] != user_dir):
