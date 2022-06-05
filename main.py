@@ -6,6 +6,7 @@ import time
 import threading
 
 import og
+import helpers
 
 # usb or sd card
 user_dir = os.getenv("USER_DIR", "/usbdrive")
@@ -16,14 +17,6 @@ file_manager_selected_path = ''
 file_manager_selected_file = ''
 file_manager_copied_path = ''
 
-# Helpers
-def isfile(file_name):
-  full_file_path = "/".join((file_manager_directory, file_name))
-  return os.path.isfile(full_file_path)
-
-def isdir(dir_name):
-  full_dir_path = "/".join((file_manager_directory, dir_name))
-  return os.path.isdir(full_dir_path)
 
 # UI elements
 menu = og.Menu()
@@ -160,6 +153,8 @@ def draw_manager_menu():
   files_list = sorted(filter(isfile, os.listdir(file_manager_directory)))
   dirs_list = sorted(filter(isdir, os.listdir(file_manager_directory)))
   if (file_manager_directory != user_dir):
+  files_list = sorted(filter(helpers.isfile, os.listdir(state["current_directory"])))
+  dirs_list = sorted(filter(helpers.isdir, os.listdir(state["current_directory"])))
     menu.items.append(['../', folder_up])
   if (file_manager_copied_path != ''):
     menu.items.append(['/', draw_action_menu])
