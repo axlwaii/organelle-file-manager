@@ -12,11 +12,12 @@ import helpers
 user_dir = os.getenv("USER_DIR", "/usbdrive")
 
 # State
-file_manager_directory = user_dir
-file_manager_selected_path = ''
-file_manager_selected_file = ''
-file_manager_copied_path = ''
-
+state = {
+  "current_directory": user_dir,
+  "copied_path": "",
+  "selected_path": "",
+  "selected_file": ""
+}
 
 # UI elements
 menu = og.Menu()
@@ -51,95 +52,84 @@ def clear_menu():
   menu.menu_offset = 0
 
 def folder_up():
-  global file_manager_directory
-  new_path = os.path.dirname(file_manager_directory)
-  file_manager_directory = new_path
+  global state
+  new_path = os.path.dirname(state["current_directory"])
+  state["current_directory"] = new_path
   draw_manager_menu()
 
 def select_directory():
-  global file_manager_directory
+  global state
   global menu
   selected_folder = menu.items[menu.selection][2]
-  new_path = "/".join((file_manager_directory, selected_folder))
-  file_manager_directory = new_path
+  new_path = "/".join((state["current_directory"], selected_folder))
+  state["current_directory"] = new_path
   draw_manager_menu()
 
 # Action status views
-def delete_file():
-  global file_manager_selected_path
+def confirm_view(title, from_path, to_path):
   og.clear_screen()
-  og.println(0, "Deleted")
+  og.println(0, title)
   og.println(1, "---------------------")
-  og.println(2, file_manager_selected_path[-20:])
-  os.system('rm -f ' + file_manager_selected_path.replace(' ', '\ '))
+  og.println(2, from_path[-20:])
+  if to_path:
+    og.println(3, from_path[-17:])
   time.sleep(2.5)
   draw_manager_menu()
 
+def delete_file():
+  global state
+  os.system('rm -f ' + state["selected_path"].replace(' ', '\ '))
+  confirm_view("Deleted", state["selected_path"], None)
+
 def copy_file():
-  global file_manager_selected_path
-  global file_manager_copied_path
-  og.clear_screen()
-  og.println(0,"COPIED")
-  og.println(1, "---------------------")
-  og.println(2, file_manager_selected_path[-20:])
-  file_manager_copied_path = file_manager_selected_path
-  time.sleep(4)
-  draw_manager_menu()
+  global state
+  state["copied_path"] = state["selected_path"]
+  confirm_view("Copied", state["selected_path"], None)
 
 def paste_file():
-  global file_manager_copied_path
-  og.clear_screen()
-  og.println(0,"PASTED")
-  og.println(1, "---------------------")
-  og.println(2, file_manager_copied_path[-20:])
-  og.println(3, "TO " + file_manager_selected_path[-17:])
-  os.system('cp  ' + file_manager_copied_path.replace(' ', '\ ') + ' ' +  file_manager_selected_path.replace(' ', '\ '))
-  time.sleep(4)
-  file_manager_copied_path = ''
-  draw_manager_menu()
+  global state
+  os.system('cp  ' + state["copied_path"].replace(' ', '\ ') + ' ' +  state["selected_path"].replace(' ', '\ '))
+  state["copied_path"] = ''
+  confirm_view("Pasted", state["copied_path"], state["selected_path"])
 
 # Menu views
-def confirm_delete_menu():
-  global file_manager_directory
-  global file_manager_selected_file
+def confirm_menu(header, subheader, yes_callback):
+  global state
   global menu
   clear_menu()
   menu.separator = True
-  menu.header= "DELETE " + file_manager_selected_file
+  menu.header = header
+  menu.subheader = subheader
   menu.items.append(["No", draw_manager_menu])
-  menu.items.append(["Yes", delete_file])
+  menu.items.append(["Yes", yes_callback])
   menu.perform()
 
+def confirm_delete_menu():
+  header= "DELETE " + state["selected_file"]
+  confirm_menu(header, None, delete_file)
+
 def confirm_paste_menu():
-  global file_manager_directory
-  global file_manager_copied_path
-  global menu
-  clear_menu()
-  menu.separator = True
-  menu.header= "COPY " + file_manager_copied_path[-15:]
-  menu.subheader= "TO " + file_manager_selected_path[-17:]
-  menu.items.append(['No', draw_manager_menu])
-  menu.items.append(['Yes', paste_file])
-  menu.perform()
+  header= "COPY " + state["copied_path"][-15:]
+  subheader= "TO " + state["selected_path"][-17:]
+  confirm_menu(header, subheader, paste_file)
 
 def draw_action_menu():
   global menu
-  global file_manager_selected_path
-  global file_manager_selected_file
-  file_manager_selected_file = menu.items[menu.selection][0]
-  if (file_manager_selected_file != '/'):
-    file_path = "/".join((file_manager_directory, file_manager_selected_file))
+  global state
+  state["selected_file"] = menu.items[menu.selection][0]
+  if (state["selected_file"] != '/'):
+    file_path = "/".join((state["current_directory"], state["selected_file"]))
   else:
-    file_path = file_manager_directory + '/'
-  file_manager_selected_path = file_path
+    file_path = state["current_directory"] + '/'
+  state["selected_path"] = file_path
   clear_menu()
   menu.header = 'ACTIONS'
   menu.separator = True
-  if (file_manager_selected_file != '/'):
+  if (state["selected_file"] != '/'):
     menu.items.append(['Copy', copy_file])
-  if (file_manager_copied_path != ''):
+  if (state["copied_path"] != ''):
     menu.items.append(['Paste', confirm_paste_menu])
-  if (file_manager_selected_file != '/'):
+  if (state["selected_file"] != '/'):
     menu.items.append(['Delete', confirm_delete_menu])
   menu.items.append(['Abort', draw_manager_menu])
   menu.items.append([''])
@@ -147,16 +137,14 @@ def draw_action_menu():
 
 def draw_manager_menu():
   global menu
-  global file_manager_directory
+  global state
   clear_menu()
-  menu.header= 'DIR:.' + file_manager_directory[-14:]
-  files_list = sorted(filter(isfile, os.listdir(file_manager_directory)))
-  dirs_list = sorted(filter(isdir, os.listdir(file_manager_directory)))
-  if (file_manager_directory != user_dir):
+  menu.header= 'DIR:.' + state["current_directory"][-14:]
   files_list = sorted(filter(helpers.isfile, os.listdir(state["current_directory"])))
   dirs_list = sorted(filter(helpers.isdir, os.listdir(state["current_directory"])))
+  if (state["current_directory"] != user_dir):
     menu.items.append(['../', folder_up])
-  if (file_manager_copied_path != ''):
+  if (state["copied_path"] != ''):
     menu.items.append(['/', draw_action_menu])
   for dir_name in dirs_list:
     menu.items.append(["/" + dir_name, select_directory, dir_name])
