@@ -15,6 +15,7 @@ user_dir = os.getenv("USER_DIR", "/usbdrive")
 state = {
   "current_directory": user_dir,
   "copied_path": "",
+  "renamed_file": "",
   "selected_path": "",
   "selected_file": ""
 }
@@ -72,7 +73,7 @@ def confirm_view(title, from_path, to_path):
   og.println(1, "---------------------")
   og.println(2, from_path[-20:])
   if to_path:
-    og.println(3, from_path[-17:])
+    og.println(3, 'TO ' + to_path[-17:])
   time.sleep(2.5)
   draw_manager_menu()
 
@@ -91,6 +92,13 @@ def paste_file():
   os.system('cp  ' + state["copied_path"].replace(' ', '\ ') + ' ' +  state["selected_path"].replace(' ', '\ '))
   state["copied_path"] = ''
   confirm_view("Pasted", state["copied_path"], state["selected_path"])
+
+def rename_file():
+  global state
+  rename_path = state["selected_path"].replace(state["selected_file"], state["renamed_file"])
+  os.system('mv  ' + state["selected_path"].replace(' ', '\ ') + ' ' +  rename_path.replace(' ', '\ '))
+  state["renamed_file"] = ''
+  confirm_view("Renamed", state["selected_path"], rename_path)
 
 # Menu views
 def confirm_menu(header, subheader, yes_callback):
@@ -113,6 +121,23 @@ def confirm_paste_menu():
   subheader = "TO " + state["selected_path"][-17:]
   confirm_menu(header, subheader, paste_file)
 
+def confirm_rename_menu():
+  state["renamed_file"] = menu.items[menu.selection][0]
+  header = "RENAME " + state["selected_file"][-13:]
+  subheader = "TO " + state["renamed_file"][-17:]
+  confirm_menu(header, subheader, rename_file)
+
+def draw_rename_menu():
+  global menu
+  global state
+  clear_menu()
+  rename_file_range = range(0, 25)
+  menu.header= 'Rename:' + state["selected_file"][-17:]
+  for file_name in rename_file_range:
+    menu.items.append([str(file_name) + '.wav', confirm_rename_menu])
+  menu.items.append(['<-- Quit', quit])
+  menu.perform()
+
 def draw_action_menu():
   global menu
   global state
@@ -130,6 +155,8 @@ def draw_action_menu():
   if (state["copied_path"] != ''):
     menu.items.append(['Paste', confirm_paste_menu])
   if (state["selected_file"] != '/'):
+    if (helpers.isWav(state["selected_file"])):
+      menu.items.append(['Rename', draw_rename_menu])
     menu.items.append(['Delete', confirm_delete_menu])
   menu.items.append(['Abort', draw_manager_menu])
   menu.items.append([''])
