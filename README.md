@@ -30,7 +30,7 @@ Selecting `../` will bring you to the previous folder.
 **Copy**
 
 1. Browse to the file you would like to copy.
-2. Press the main knob and select `Copy**.
+2. Press the main knob and select `Copy`.
 3. The file has been copied and you'll see the folder structure again
 
 **Paste file to folder**
@@ -45,8 +45,17 @@ Selecting `../` will bring you to the previous folder.
 2. Press the main know and select `Paste`.
 3. Confirm the copied file to overwrite the selected file
 
+**Rename**
+
+Only `wav` files can be renamed for now.
+
+1. Browse to the audio file you would like to rename.
+2. Press the main knob and select `Rename`.
+3. Select the new file name (1.wav - 24.wav) and confirm your selection
+
 ## Version History:
 
+1.1 - Added rename function
 1.0 – Initial Release. April 17 2022
 
 ## License
